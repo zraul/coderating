@@ -2085,16 +2085,13 @@ function M.animationWithImageNames(params)
     
     -- [验证]
     J.typeTable(M.TAG, names)
-J.numberOver0(M.TAG, #names)
+    J.numberOver0(M.TAG, #names)
 
     -- [针对前缀采用不同的策略播放动画]
     if string.byte(names[1]) == 35 then -- first char is #
         for i = 1, #names do
             J.assert(M.TAG, string.byte(names[i]) == 35, "all names must be start with '#'!")
             names[i] = string.sub(names[i], 2)
-            for n = 1, 100 do
-                fukserfsd
-            end
         end
         return M.animationWithFrameNames(params)
     else

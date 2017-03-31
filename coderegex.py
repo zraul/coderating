@@ -12,6 +12,6 @@ _OBJECTIVE_C_CLASS_REGEX = re.compile('')
 
 _JAVA_VARIABLE_REGEX = re.compile(ur'private [a-zA-Z\_]{1}[a-zA-Z0-9\_]* [a-zA-Z\_]{1}[a-zA-Z0-9\_]*.*;')
 
-_LUA_REMARK_REGEX = re.compile(ur'(--\[\[(\s|\S)*?\]\](--)*)')
+_LUA_COMMENTS_REGEX = re.compile(ur'(--\[\[(\s|\S)*?\]\](--)*)')
 _LUA_FUNCTION_REGEX = re.compile(ur'(function\s+(.*))')
 _LUA_LOCAL_VARIABLE_REGEX = re.compile(ur'(local\s(.)*)')

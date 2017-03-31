@@ -10,6 +10,7 @@ import os
 import re
 from coderegex import _LUA_FUNCTION_REGEX
 from coderegex import _LUA_LOCAL_VARIABLE_REGEX
+from coderegex import _LUA_COMMENTS_REGEX
 
 
 # 所有函数列表
@@ -25,9 +26,25 @@ def loadFile(filename):
     file = open(filename, 'r')
     content = file.read()
     file_lines = content.splitlines()
+    doLuaCommentsCheck(content, file_lines)
+    # doLuaFunctionCheck(content, file_lines)
 
+
+#
+#   检查文件注释
+#
+#
+def doLuaCommentsCheck(content, file_lines):
+    print('doLuaCommentsCheck')
+    comments_list = _LUA_COMMENTS_REGEX.findall(content)
+    print(len(comments_list))
+
+#
+#   检查函数内容
+#
+#
+def doLuaFunctionCheck(content, file_lines):
     fun_list = _LUA_FUNCTION_REGEX.findall(content)
-
     for i in range(len(fun_list)):
         try:
             length = getAllFunctionContent(file_lines.index(fun_list[i][0].strip()), file_lines)
@@ -108,13 +125,13 @@ def luaCheckLoacalVariable(fun_lines):
             print('同一行变量赋值过多')
 
 #
-# 判断函数是否对齐,每行遍历,进行前后对比
+# 判断函数是否对齐,每行遍历,进行前后对比,后期需要改进逻辑
 # fun_lines(list):函数全部内容
 #
 def luaCheckIsalign(fun_lines):
     lineTabCnt = []
     for i in range(len(fun_lines)):
-        print("%s %d" % (fun_lines[i], getSpaceCnt(fun_lines[i])))
+        # print("%s %d" % (fun_lines[i], getSpaceCnt(fun_lines[i])))
         lineTabCnt.append(getSpaceCnt(fun_lines[i]))
 
     for n in range(1, len(fun_lines) - 1):
@@ -139,15 +156,6 @@ def luaCheckIsalign(fun_lines):
         elif (lineTabCnt[n] == 0) and (len(fun_lines[n]) != 0):
             print('%d 行直接顶格' % n)
 
-#
-# 尝试使用递归进行判断if/for/local function
-#
-#
-def luaCheckIsalign2(fun_lines):
-    lineTabCnt = []
-    for i in range(len(fun_lines)):
-        print("%s %d" % (fun_lines[i], getSpaceCnt(fun_lines[i])))
-        lineTabCnt.append(getSpaceCnt(fun_lines[i]))
 
 #
 # 获取空格数目
