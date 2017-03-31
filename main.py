@@ -111,7 +111,7 @@ def luaCheckLoacalVariable(fun_lines):
 # 判断函数是否对齐,每行遍历,进行前后对比
 # fun_lines(list):函数全部内容
 #
-def luaCheckIsalign2(fun_lines):
+def luaCheckIsalign(fun_lines):
     lineTabCnt = []
     for i in range(len(fun_lines)):
         print("%s %d" % (fun_lines[i], getSpaceCnt(fun_lines[i])))
@@ -143,8 +143,11 @@ def luaCheckIsalign2(fun_lines):
 # 尝试使用递归进行判断if/for/local function
 #
 #
-
-
+def luaCheckIsalign2(fun_lines):
+    lineTabCnt = []
+    for i in range(len(fun_lines)):
+        print("%s %d" % (fun_lines[i], getSpaceCnt(fun_lines[i])))
+        lineTabCnt.append(getSpaceCnt(fun_lines[i]))
 
 #
 # 获取空格数目
