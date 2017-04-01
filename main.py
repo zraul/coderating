@@ -37,7 +37,8 @@ def loadFile(filename):
 def doLuaCommentsCheck(content, file_lines):
     print('doLuaCommentsCheck')
     comments_list = _LUA_COMMENTS_REGEX.findall(content)
-    print(len(comments_list))
+    print(comments_list[0][0])
+    print(comments_list[0][0].count('http://www.babybus.com/superdo/'))
 
 #
 #   检查函数内容
