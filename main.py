@@ -46,6 +46,9 @@ def doLuaCommentsCheck(content, file_lines):
 #
 def luaCheckFileComments(fcomments, scomments):
     if fcomments.count('http://www.babybus.com/superdo/') >= 1 and scomments.count('Copyright (c) 2012-2013 baby-bus.com') >= 1:
+        pass
+    else:
+        print()
 
 
 #
