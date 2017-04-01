@@ -37,8 +37,16 @@ def loadFile(filename):
 def doLuaCommentsCheck(content, file_lines):
     print('doLuaCommentsCheck')
     comments_list = _LUA_COMMENTS_REGEX.findall(content)
-    print(comments_list[0][0])
-    print(comments_list[0][0].count('http://www.babybus.com/superdo/'))
+    print(comments_list[0][0].count('http://www.babybus.com/superdo/') and comments_list[0][0].count('Copyright (c) 2012-2013 baby-bus.com'))
+    print(comments_list[1][0].count('!--'))
+
+#
+#   检查文件头注释
+#
+#
+def luaCheckFileComments(fcomments, scomments):
+    if fcomments.count('http://www.babybus.com/superdo/') >= 1 and scomments.count('Copyright (c) 2012-2013 baby-bus.com') >= 1:
+
 
 #
 #   检查函数内容
