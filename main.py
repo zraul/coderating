@@ -1,10 +1,5 @@
 # -*- coding:utf-8-*-
 
-#
-#
-#def luaCheckIsalign(fun_lines):
-#
-
 import sys
 import os
 import re
@@ -17,6 +12,8 @@ from coderegex import _LUA_COMMENTS_REGEX
 fun_list = []
 # 注释列表
 remark_list = []
+# 评分错误内容
+rating_result = []
 
 #
 # 加载需要评分的文件
@@ -27,7 +24,7 @@ def loadFile(filename):
     content = file.read()
     file_lines = content.splitlines()
     doLuaCommentsCheck(content, file_lines)
-    # doLuaFunctionCheck(content, file_lines)
+    doLuaAllFunctionCheck(content, file_lines)
 
 
 #
@@ -37,25 +34,30 @@ def loadFile(filename):
 def doLuaCommentsCheck(content, file_lines):
     print('doLuaCommentsCheck')
     comments_list = _LUA_COMMENTS_REGEX.findall(content)
-    print(comments_list[0][0].count('http://www.babybus.com/superdo/') and comments_list[0][0].count('Copyright (c) 2012-2013 baby-bus.com'))
-    print(comments_list[1][0].count('!--'))
+    luaCheckFileHeaderComments(comments_list[0][0], comments_list[1][0])
 
 #
 #   检查文件头注释
+#   copyrightComments：文件头版权注释
+#   functionComments：文件作用注释
 #
-#
-def luaCheckFileComments(fcomments, scomments):
-    if fcomments.count('http://www.babybus.com/superdo/') >= 1 and scomments.count('Copyright (c) 2012-2013 baby-bus.com') >= 1:
-        pass
+def luaCheckFileHeaderComments(copyrightComments, functionComments):
+    if copyrightComments.count('http://www.babybus.com/superdo/') >= 1 \
+            and copyrightComments.count('Copyright (c) 2012-2013 baby-bus.com') >= 1:
+        print('文件头版权声明正确')
     else:
-        print()
+        print('文件头版权声明错误')
 
+    if functionComments.count('!--') >= 1 and len(functionComments) >= 5:
+        print('文件作用声明正确')
+    else:
+        print('文件作用声明错误')
 
 #
 #   检查函数内容
 #
 #
-def doLuaFunctionCheck(content, file_lines):
+def doLuaAllFunctionCheck(content, file_lines):
     fun_list = _LUA_FUNCTION_REGEX.findall(content)
     for i in range(len(fun_list)):
         try:
@@ -70,7 +72,8 @@ def doLuaFunctionCheck(content, file_lines):
             if file_lines.index(fun_list[i][0].strip()) + 1 == 2081:
                 fun_line = file_lines[file_lines.index(fun_list[i][0].strip()):file_lines.index(fun_list[i][0].strip()) + length]
                 luaCheckLoacalVariable(fun_line)
-                luaCheckIsalign(fun_line)
+                luaCheckIsAlign(fun_line)
+                checkFunctionLineIsTooLong(fun_line)
         except Exception,e:
             pass
 
@@ -83,6 +86,14 @@ def getAllFunctionContent(number, file_lines):
             return i + 1
 
     return 0
+
+#
+# 检查函数每行是否超过120列
+#
+def checkFunctionLineIsTooLong(fun_lines):
+    for i in range(len(fun_lines)):
+        if len(fun_lines[i]) >= 120:
+            print("函数列超过120列")
 
 #
 # 检查函数名称与函数
@@ -140,16 +151,16 @@ def luaCheckLoacalVariable(fun_lines):
 # 判断函数是否对齐,每行遍历,进行前后对比,后期需要改进逻辑
 # fun_lines(list):函数全部内容
 #
-def luaCheckIsalign(fun_lines):
+def luaCheckIsAlign(fun_lines):
     lineTabCnt = []
     for i in range(len(fun_lines)):
         # print("%s %d" % (fun_lines[i], getSpaceCnt(fun_lines[i])))
         lineTabCnt.append(getSpaceCnt(fun_lines[i]))
 
     for n in range(1, len(fun_lines) - 1):
-        # if/for特别判断
+        # if/for判断
         if ('if' in fun_lines[n]) or ('for' in fun_lines[n]):
-            print('if 开始行 %d' % n)
+            # print('if 开始行 %d' % n)
             m = 0
             for m in range(1, len(fun_lines) - n):
                 if ((lineTabCnt[n + m] - lineTabCnt[n]) % 4 != 0):
@@ -157,7 +168,7 @@ def luaCheckIsalign(fun_lines):
                     break
 
                 if ('end' in fun_lines[n + m]) and (lineTabCnt[n + m] == lineTabCnt[n]):
-                    print('if结束行 %d' % ( n + m))
+                    # print('if结束行 %d' % ( n + m))
                     break
 
                 if m == (len(fun_lines) - n - 1):
@@ -184,7 +195,6 @@ def getSpaceCnt(line):
     return cnt
 
 def main():
-    # luaCheckFunctionName('function M.newEasing(action, easingName, more())')
     filename = sys.argv[1]
     loadFile(filename)
 
