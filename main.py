@@ -9,9 +9,12 @@ from coderegex import _LUA_COMMENTS_REGEX
 
 
 # 所有函数列表
-fun_list = []
+# fun_list = []
+# 函数对应航列表
+fun_line_dic = {}
 # 注释列表
-remark_list = []
+# comments_list = []
+
 # 评分错误内容
 rating_result = []
 
@@ -28,8 +31,7 @@ def loadFile(filename):
 
 
 #
-#   检查文件注释
-#
+# 检查文件注释
 #
 def doLuaCommentsCheck(content, file_lines):
     print('doLuaCommentsCheck')
@@ -37,9 +39,9 @@ def doLuaCommentsCheck(content, file_lines):
     luaCheckFileHeaderComments(comments_list[0][0], comments_list[1][0])
 
 #
-#   检查文件头注释
-#   copyrightComments：文件头版权注释
-#   functionComments：文件作用注释
+# 检查文件头注释
+# copyrightComments：文件头版权注释
+# functionComments：文件作用注释
 #
 def luaCheckFileHeaderComments(copyrightComments, functionComments):
     if copyrightComments.count('http://www.babybus.com/superdo/') >= 1 \
@@ -54,11 +56,12 @@ def luaCheckFileHeaderComments(copyrightComments, functionComments):
         print('文件作用声明错误')
 
 #
-#   检查函数内容
+# 检查函数内容
 #
 #
 def doLuaAllFunctionCheck(content, file_lines):
     fun_list = _LUA_FUNCTION_REGEX.findall(content)
+    getAllFunctionLine(fun_list, file_lines)
     for i in range(len(fun_list)):
         try:
             length = getAllFunctionContent(file_lines.index(fun_list[i][0].strip()), file_lines)
@@ -75,6 +78,16 @@ def doLuaAllFunctionCheck(content, file_lines):
                 luaCheckIsAlign(fun_line)
                 checkFunctionLineIsTooLong(fun_line)
         except Exception,e:
+            pass
+
+#
+# 保存所有函数所在行
+#
+def getAllFunctionLine(fun_list, file_lines):
+    for i in range(len(fun_list)):
+        try:
+            fun_line_dic[file_lines.index(fun_list[i][0].strip())] = fun_list[i][0].strip()
+        except Exception, e:
             pass
 
 #
