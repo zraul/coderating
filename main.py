@@ -7,16 +7,12 @@ from coderegex import _LUA_FUNCTION_REGEX
 from coderegex import _LUA_LOCAL_VARIABLE_REGEX
 from coderegex import _LUA_COMMENTS_REGEX
 
-
-# 所有函数列表
-# fun_list = []
 # 函数对应航列表
 fun_line_dic = {}
-# 注释列表
-# comments_list = []
-
 # 评分错误内容
 rating_result = []
+# 独立行关键字
+oneLine_keywords_list = ['if', 'for', 'do', 'while', 'case', 'switch', 'default']
 
 #
 # 加载需要评分的文件
@@ -117,18 +113,19 @@ def checkFunctionLineIsTooLong(fun_lines, lineNumber):
 
     for m in range(len(fun_lines)):
         checkCommaIsContainSpace(fun_lines[m], lineNumber, m)
+        checkOneLineKeyWords(fun_lines[m], lineNumber, m)
 
 
 #
 # 判断是否逗号后面是否有空格, 只有回车的空行会引起调用错误
 #
-def checkCommaIsContainSpace(lineContent, lineNumber, m):
+def checkCommaIsContainSpace(lineContent, startLineNumber, indexLineNumber):
     try:
         if (lineContent.index(',') != -1) and ('--' not in lineContent) and (not lineContent.endswith(',')):
             for i in range(lineContent.count(',')):
                 if ', ' not in lineContent:
                     # print('%d %s' % (lineNumber, lineContent))
-                    rating_result.append('%d:逗号后未追加空格' % (lineNumber + m + 1))
+                    rating_result.append('%d:逗号后未追加空格' % (startLineNumber + indexLineNumber + 1))
                     break
                 else:
                     lineContent = lineContent.replace(', ', '', 1)
@@ -136,8 +133,17 @@ def checkCommaIsContainSpace(lineContent, lineNumber, m):
         pass
 
 #
+# 检查if、for、do、while、case、switch、default等语句自占一行
 #
-#
+def checkOneLineKeyWords(lineContent, startLineNumber, indexLineNumber):
+    try:
+        for i in range(len(oneLine_keywords_list)):
+            print('%d %d' % (startLineNumber + indexLineNumber + 1, lineContent.index(oneLine_keywords_list[i])))
+            # if lineContent.index(oneLine_keywords_list[i]) != -1:
+            #     if lineContent.endswith('end'):
+            #         rating_result.append('%d:%s语句未独占一行' % (startLineNumber + indexLineNumber + 1))
+    except Exception, e:
+        pass
 
 #
 # 检查函数名称与函数
