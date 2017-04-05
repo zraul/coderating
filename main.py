@@ -65,18 +65,24 @@ def doLuaAllFunctionCheck(content, file_lines):
     for i in range(len(fun_list)):
         try:
             length = getAllFunctionContent(file_lines.index(fun_list[i][0].strip()), file_lines)
-            # if length > 20:
-            #     print("%s 函数超过20行" % file_lines.index(fun_list[i][0].strip()))
+            lineNumber = file_lines.index(fun_list[i][0].strip())
+            if length > 20:
+                rating_result.append("%d:函数超过20行" % (lineNumber + 1))
 
             # 函数名与参数格式检查
-            # luaCheckFunctionName(fun_list[i][1].strip())
+            luaCheckFunctionName(fun_list[i][1].strip(), lineNumber)
+
+            fun_line = file_lines[lineNumber:lineNumber + length]
+            luaCheckLoacalVariable(fun_line, lineNumber)
+            luaCheckIsAlign(fun_line, lineNumber)
+            checkFunctionLineIsTooLong(fun_line, lineNumber)
 
             # local变量检查
-            if file_lines.index(fun_list[i][0].strip()) + 1 == 2081:
-                fun_line = file_lines[file_lines.index(fun_list[i][0].strip()):file_lines.index(fun_list[i][0].strip()) + length]
-                luaCheckLoacalVariable(fun_line)
-                luaCheckIsAlign(fun_line)
-                checkFunctionLineIsTooLong(fun_line)
+            # if file_lines.index(fun_list[i][0].strip()) + 1 == 2081:
+            #     fun_line = file_lines[file_lines.index(fun_list[i][0].strip()):file_lines.index(fun_list[i][0].strip()) + length]
+            #     luaCheckLoacalVariable(fun_line, lineNumber)
+            #     luaCheckIsAlign(fun_line, lineNumber)
+            #     checkFunctionLineIsTooLong(fun_line, lineNumber)
         except Exception,e:
             pass
 
@@ -101,83 +107,114 @@ def getAllFunctionContent(number, file_lines):
     return 0
 
 #
-# 检查函数每行是否超过120列
+# 检查函数每行是否超过120列,遍历方法每一行
 #
-def checkFunctionLineIsTooLong(fun_lines):
+def checkFunctionLineIsTooLong(fun_lines, lineNumber):
     for i in range(len(fun_lines)):
         if len(fun_lines[i]) >= 120:
-            print("函数列超过120列")
+            rating_result.append('%d:单列超过120' % (lineNumber + i + 1))
+
+
+    for m in range(len(fun_lines)):
+        checkCommaIsContainSpace(fun_lines[m], lineNumber, m)
+
+
+#
+# 判断是否逗号后面是否有空格, 只有回车的空行会引起调用错误
+#
+def checkCommaIsContainSpace(lineContent, lineNumber, m):
+    try:
+        if (lineContent.index(',') != -1) and ('--' not in lineContent) and (not lineContent.endswith(',')):
+            for i in range(lineContent.count(',')):
+                if ', ' not in lineContent:
+                    # print('%d %s' % (lineNumber, lineContent))
+                    rating_result.append('%d:逗号后未追加空格' % (lineNumber + m + 1))
+                    break
+                else:
+                    lineContent = lineContent.replace(', ', '', 1)
+    except Exception, e:
+        pass
+
+#
+#
+#
 
 #
 # 检查函数名称与函数
 # line(list):具体内容
 #
-def luaCheckFunctionName(line):
+def luaCheckFunctionName(function, lineNumber):
     # 函数名称
-    name = line[0:line.find('(')]
+    name = function[0:function.find('(')]
 
     # 函数参数
-    argument = line[line.find('(') + 1:line.rfind(')')]
+    argument = function[function.find('(') + 1:function.rfind(')')]
 
     name.strip()
     if '.' in name:
         name = name[name.find('.') + 1:]
 
     if not name[0].islower():
-        print("the first characters is not lower")
+        rating_result.append('%s:函数名非小写字母开头' % (lineNumber + 1))
+        # print("the first characters is not lower")
 
     # 判断是否有多个单词组成
     if re.findall('[A-Z]', name):
-        print('this function name is wright')
+        pass
     else:
-        if len(name) >= 8:
-            print('this function name may be wrong')
+        if len(name) >= 10:
+            rating_result.append('%s:函数名长度超过10个字母未分词,可能存在错误' % (lineNumber + 1))
+            # print('this function name may be wrong')
 
     # 多个参数逗号间是否有空格
     if ',' in argument:
         count = argument.count(',')
         for i in range(count):
             if ', ' not in argument:
-                print('函数参数逗号未空格')
+                rating_result('%s:函数参数逗号之间为留有空格' % (lineNumber + 1))
+                # print('函数参数逗号未空格')
                 break
             else:
                 argument = argument.replace(', ', '', 1)
     else:
-        print('函数未包含两个以上参数')
+        pass
+        # print('函数未包含两个以上参数')
 
 #
 # 判断函数内部local变量
 # fun_lines(list):函数全部内容
 #
-def luaCheckLoacalVariable(fun_lines):
+def luaCheckLoacalVariable(fun_lines, lineNumber):
     lines = '\n'.join(fun_lines)
     localVariable = _LUA_LOCAL_VARIABLE_REGEX.findall(lines)
-    print(localVariable)
     for i in range(len(localVariable)):
         if '=' not in localVariable[i][0]:
-            print('%s 变量未初始化或赋值' % localVariable[i][0])
+            rating_result.append('%s:变量未初始化或者赋值' % (lineNumber + i + 1))
+            # print('%s 变量未初始化或赋值' % localVariable[i][0])
 
         if localVariable[i][0].count(',') >= 4:
-            print('同一行变量赋值过多')
+            rating_result.append('%s:同一行变量赋值过多' % (lineNumber + i + 1))
+            # print('同一行变量赋值过多')
+
 
 #
 # 判断函数是否对齐,每行遍历,进行前后对比,后期需要改进逻辑
 # fun_lines(list):函数全部内容
 #
-def luaCheckIsAlign(fun_lines):
+def luaCheckIsAlign(fun_lines, lineNumber):
     lineTabCnt = []
     for i in range(len(fun_lines)):
-        # print("%s %d" % (fun_lines[i], getSpaceCnt(fun_lines[i])))
         lineTabCnt.append(getSpaceCnt(fun_lines[i]))
 
     for n in range(1, len(fun_lines) - 1):
         # if/for判断
-        if ('if' in fun_lines[n]) or ('for' in fun_lines[n]):
+        if ('if ' in fun_lines[n]) or ('for ' in fun_lines[n]):
             # print('if 开始行 %d' % n)
             m = 0
             for m in range(1, len(fun_lines) - n):
                 if ((lineTabCnt[n + m] - lineTabCnt[n]) % 4 != 0):
-                    print('格式未对齐')
+                    rating_result.append('%d:格式未与前行对齐' % (lineNumber + n + m + 1))
+                    # print('格式未对齐')
                     break
 
                 if ('end' in fun_lines[n + m]) and (lineTabCnt[n + m] == lineTabCnt[n]):
@@ -185,12 +222,15 @@ def luaCheckIsAlign(fun_lines):
                     break
 
                 if m == (len(fun_lines) - n - 1):
-                    print('%d行end未对齐或未写end' % n)
+                    rating_result.append('%d:end未对齐或未写end' % (lineNumber + n + m + 1))
+                    # print('%d行end未对齐或未写end' % n)
 
         elif ((lineTabCnt[n] - lineTabCnt[n-1]) % 4 != 0):
-            print('%d 行与其它行格式未对齐' % (n))
+            rating_result.append('%d:与其它行格式未对齐' % (lineNumber + n + 1))
+            # print('%d 行与其它行格式未对齐' % (n))
         elif (lineTabCnt[n] == 0) and (len(fun_lines[n]) != 0):
-            print('%d 行直接顶格' % n)
+            rating_result.append('%d:直接顶格' % (lineNumber + n + 1))
+            # print('%d 行直接顶格' % n)
 
 
 #
@@ -210,6 +250,8 @@ def getSpaceCnt(line):
 def main():
     filename = sys.argv[1]
     loadFile(filename)
+    for i in range(len(rating_result)):
+        print(rating_result[i])
 
 if __name__ == '__main__':
     main()

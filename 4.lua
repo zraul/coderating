@@ -5254,7 +5254,7 @@ function M.actionCatmullRom(params)
     if true then 
         local array = {}
         for i = 1, #points do
-           table.insert(array, points[i])
+            table.insert(array, points[i])
         end
         action = clazz:create(time, array)
     end
@@ -5420,7 +5420,7 @@ function M.actionCardinalSpline(params)
     if true then 
         local array = {}
         for i = 1, #points do
-           table.insert(array, points[i])
+            table.insert(array, points[i])
         end
         action = clazz:create(time, array, tension)
     end
