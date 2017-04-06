@@ -6,6 +6,7 @@ import re
 from coderegex import _LUA_FUNCTION_REGEX
 from coderegex import _LUA_LOCAL_VARIABLE_REGEX
 from coderegex import _LUA_COMMENTS_REGEX
+from coderegex import _LUA_FUNCTION_WITH_COMMENTS_REGEX
 
 # 函数对应航列表
 fun_line_dic = {}
@@ -21,15 +22,85 @@ oneLine_keywords_list = ['if', 'for', 'do', 'while', 'case', 'switch', 'default'
 def loadFile(filename):
     file = open(filename, 'r')
     content = file.read()
-    file_lines = content.splitlines()
-    doLuaCommentsCheck(content, file_lines)
-    doLuaAllFunctionCheck(content, file_lines)
+    fileLines = content.splitlines()
+    # doLuaCommentsCheck(content, fileLines)
+    doLuaAllFunctionCheck(content, fileLines)
 
+# 获取报错所在行
+# def getLineNumber(content):
+#     try:
+#         print('###########################%d' % fileLines.index(content))
+#     except Exception, e:
+#         print('$$$$$$$$$$$$$$$$$$$')
+
+
+#
+# 检查是方法注释是否完整
+#
+def checkFunctionWithComments(functionWithCommentsList, functionList):
+    tmpFunctionList = []
+    for i in range(len(functionWithCommentsList)):
+        tmpFunctionList.append(functionWithCommentsList[i][0].splitlines()[-1])
+
+
+    for i in range(len(tmpFunctionList)):
+        if tmpFunctionList[i] in functionList:
+            if 'M.' in tmpFunctionList[i]:
+                checkPluginFunctionComments(functionWithCommentsList[i][0], tmpFunctionList[i])
+            elif 'M:' in tmpFunctionList[i]:
+                checkMemberFunctionComments(functionWithCommentsList[i][0], tmpFunctionList[i])
+            else:
+                checkPrivateFunctionComments(functionWithCommentsList[i][0], tmpFunctionList[i])
+        else:
+            print('%s 方法未写注释内容' % tmpFunctionList[i])
+
+#
+# 检查方法[插件]注释
+#
+def checkPluginFunctionComments(content, functionName):
+    try:
+        getLineNumber(functionName)
+        if 'Parameters:' not in content:
+            print('%s 缺少参数注释' % functionName)
+
+        if 'Returns:' not in content:
+            print('%s 缺少返回参数注释' % functionName)
+
+        if 'Useage:' not in content:
+            print('%s 缺少用法注释' % functionName)
+
+        if 'Refer' not in content:
+            print('%s 缺少关联函数注释' % functionName)
+
+        if 'See' not in content:
+            print('%s 缺少参考文档注释' % functionName)
+    except Exception, e:
+        pass
+
+#
+# 检查私有方法注释
+#
+def checkPrivateFunctionComments(content, functionName):
+    try:
+        if '-- ' not in content.splitlines()[-2]:
+            print('%s 私有方法缺少注释' % functionName)
+    except Exception, e:
+        pass
+
+#
+# 检查成员方法注释
+#
+def checkMemberFunctionComments(content, functionName):
+    try:
+        if '-- ' not in content.splitlines()[-2]:
+            print('%s 成员方法缺少注释' % functionName)
+    except Exception, e:
+        pass
 
 #
 # 检查文件注释
 #
-def doLuaCommentsCheck(content, file_lines):
+def doLuaCommentsCheck(content, fileLines):
     print('doLuaCommentsCheck')
     comments_list = _LUA_COMMENTS_REGEX.findall(content)
     luaCheckFileHeaderComments(comments_list[0][0], comments_list[1][0])
@@ -42,62 +113,69 @@ def doLuaCommentsCheck(content, file_lines):
 def luaCheckFileHeaderComments(copyrightComments, functionComments):
     if copyrightComments.count('http://www.babybus.com/superdo/') >= 1 \
             and copyrightComments.count('Copyright (c) 2012-2013 baby-bus.com') >= 1:
-        print('文件头版权声明正确')
+        pass
+        # print('文件头版权声明正确')
     else:
-        print('文件头版权声明错误')
+        rating_result.append('文件头版权声明错误')
+        # print('文件头版权声明错误')
 
     if functionComments.count('!--') >= 1 and len(functionComments) >= 5:
-        print('文件作用声明正确')
+        pass
+        # print('文件作用声明正确')
     else:
-        print('文件作用声明错误')
+        rating_result.append('文件作用声明错误')
+        # print('文件作用声明错误')
 
 #
 # 检查函数内容
 #
 #
-def doLuaAllFunctionCheck(content, file_lines):
-    fun_list = _LUA_FUNCTION_REGEX.findall(content)
-    getAllFunctionLine(fun_list, file_lines)
-    for i in range(len(fun_list)):
+def doLuaAllFunctionCheck(content, fileLines):
+    functionList = _LUA_FUNCTION_REGEX.findall(content)
+    getAllFunctionLine(functionList, fileLines)
+    realFunctionList = []
+    for i in range(len(functionList)):
         try:
-            length = getAllFunctionContent(file_lines.index(fun_list[i][0].strip()), file_lines)
-            lineNumber = file_lines.index(fun_list[i][0].strip())
+            length = getAllFunctionContent(fileLines.index(functionList[i][0].strip()), fileLines)
+            lineNumber = fileLines.index(functionList[i][0].strip())
             if length > 20:
                 rating_result.append("%d:函数超过20行" % (lineNumber + 1))
 
             # 函数名与参数格式检查
-            luaCheckFunctionName(fun_list[i][1].strip(), lineNumber)
+            luaCheckFunctionName(functionList[i][0].strip(), lineNumber)
 
-            fun_line = file_lines[lineNumber:lineNumber + length]
+            # 检查方法内容
+            fun_line = fileLines[lineNumber:lineNumber + length]
             luaCheckLoacalVariable(fun_line, lineNumber)
             luaCheckIsAlign(fun_line, lineNumber)
             checkFunctionLineIsTooLong(fun_line, lineNumber)
 
-            # local变量检查
-            # if file_lines.index(fun_list[i][0].strip()) + 1 == 2081:
-            #     fun_line = file_lines[file_lines.index(fun_list[i][0].strip()):file_lines.index(fun_list[i][0].strip()) + length]
-            #     luaCheckLoacalVariable(fun_line, lineNumber)
-            #     luaCheckIsAlign(fun_line, lineNumber)
-            #     checkFunctionLineIsTooLong(fun_line, lineNumber)
+            # 检查方法注释
+            realFunctionList.append(functionList[i][0].strip())
         except Exception,e:
             pass
+
+    functionWithCommentsList = _LUA_FUNCTION_WITH_COMMENTS_REGEX.findall(content)
+    checkFunctionWithComments(functionWithCommentsList, realFunctionList)
+
+
 
 #
 # 保存所有函数所在行
 #
-def getAllFunctionLine(fun_list, file_lines):
-    for i in range(len(fun_list)):
+def getAllFunctionLine(functionList, fileLines):
+    for i in range(len(functionList)):
         try:
-            fun_line_dic[file_lines.index(fun_list[i][0].strip())] = fun_list[i][0].strip()
+            fun_line_dic[fileLines.index(functionList[i][0].strip())] = fileLines[i][0].strip()
         except Exception, e:
             pass
 
 #
 # 获取完整函数内容,返回函数行数
 #
-def getAllFunctionContent(number, file_lines):
+def getAllFunctionContent(number, fileLines):
     for i in range(200):
-        if file_lines[number + i] == 'end':
+        if fileLines[number + i] == 'end':
             return i + 1
 
     return 0
@@ -105,15 +183,15 @@ def getAllFunctionContent(number, file_lines):
 #
 # 检查函数每行是否超过120列,遍历方法每一行
 #
-def checkFunctionLineIsTooLong(fun_lines, lineNumber):
-    for i in range(len(fun_lines)):
-        if len(fun_lines[i]) >= 120:
+def checkFunctionLineIsTooLong(functionLines, lineNumber):
+    for i in range(len(functionLines)):
+        if len(functionLines[i]) >= 120:
             rating_result.append('%d:单列超过120' % (lineNumber + i + 1))
 
 
-    for m in range(len(fun_lines)):
-        checkCommaIsContainSpace(fun_lines[m], lineNumber, m)
-        checkOneLineKeyWords(fun_lines[m], lineNumber, m)
+    for m in range(len(functionLines)):
+        checkCommaIsContainSpace(functionLines[m], lineNumber, m)
+        checkOneLineKeyWords(functionLines[m], lineNumber, m)
 
 
 #
@@ -124,7 +202,6 @@ def checkCommaIsContainSpace(lineContent, startLineNumber, indexLineNumber):
         if (lineContent.index(',') != -1) and ('--' not in lineContent) and (not lineContent.endswith(',')):
             for i in range(lineContent.count(',')):
                 if ', ' not in lineContent:
-                    # print('%d %s' % (lineNumber, lineContent))
                     rating_result.append('%d:逗号后未追加空格' % (startLineNumber + indexLineNumber + 1))
                     break
                 else:
@@ -138,10 +215,10 @@ def checkCommaIsContainSpace(lineContent, startLineNumber, indexLineNumber):
 def checkOneLineKeyWords(lineContent, startLineNumber, indexLineNumber):
     try:
         for i in range(len(oneLine_keywords_list)):
-            print('%d %d' % (startLineNumber + indexLineNumber + 1, lineContent.index(oneLine_keywords_list[i])))
-            # if lineContent.index(oneLine_keywords_list[i]) != -1:
-            #     if lineContent.endswith('end'):
-            #         rating_result.append('%d:%s语句未独占一行' % (startLineNumber + indexLineNumber + 1))
+            if lineContent.index(oneLine_keywords_list[i]) != -1:
+                if lineContent.endswith('end'):
+                    # print('%d %s' % (startLineNumber + indexLineNumber + 1, lineContent))
+                    rating_result.append('%d:%s语句未独占一行' % (startLineNumber + indexLineNumber + 1, oneLine_keywords_list[i]))
     except Exception, e:
         pass
 
@@ -190,51 +267,48 @@ def luaCheckFunctionName(function, lineNumber):
 # 判断函数内部local变量
 # fun_lines(list):函数全部内容
 #
-def luaCheckLoacalVariable(fun_lines, lineNumber):
-    lines = '\n'.join(fun_lines)
+def luaCheckLoacalVariable(functionLines, lineNumber):
+    lines = '\n'.join(functionLines)
     localVariable = _LUA_LOCAL_VARIABLE_REGEX.findall(lines)
-    for i in range(len(localVariable)):
+    for i in range(1, len(localVariable)):
         if '=' not in localVariable[i][0]:
-            rating_result.append('%s:变量未初始化或者赋值' % (lineNumber + i + 1))
-            # print('%s 变量未初始化或赋值' % localVariable[i][0])
+            rating_result.append('%s %d %d %s:变量未初始化或者赋值' % (localVariable[i][0], lineNumber, i, lineNumber + i + 1))
 
         if localVariable[i][0].count(',') >= 4:
             rating_result.append('%s:同一行变量赋值过多' % (lineNumber + i + 1))
-            # print('同一行变量赋值过多')
-
 
 #
 # 判断函数是否对齐,每行遍历,进行前后对比,后期需要改进逻辑
 # fun_lines(list):函数全部内容
 #
-def luaCheckIsAlign(fun_lines, lineNumber):
+def luaCheckIsAlign(functionLines, lineNumber):
     lineTabCnt = []
-    for i in range(len(fun_lines)):
-        lineTabCnt.append(getSpaceCnt(fun_lines[i]))
+    for i in range(len(functionLines)):
+        lineTabCnt.append(getSpaceCnt(functionLines[i]))
 
-    for n in range(1, len(fun_lines) - 1):
+    for n in range(1, len(functionLines) - 1):
         # if/for判断
-        if ('if ' in fun_lines[n]) or ('for ' in fun_lines[n]):
+        if ('if ' in functionLines[n]) or ('for ' in functionLines[n]):
             # print('if 开始行 %d' % n)
             m = 0
-            for m in range(1, len(fun_lines) - n):
+            for m in range(1, len(functionLines) - n):
                 if ((lineTabCnt[n + m] - lineTabCnt[n]) % 4 != 0):
                     rating_result.append('%d:格式未与前行对齐' % (lineNumber + n + m + 1))
                     # print('格式未对齐')
                     break
 
-                if ('end' in fun_lines[n + m]) and (lineTabCnt[n + m] == lineTabCnt[n]):
+                if ('end' in functionLines[n + m]) and (lineTabCnt[n + m] == lineTabCnt[n]):
                     # print('if结束行 %d' % ( n + m))
                     break
 
-                if m == (len(fun_lines) - n - 1):
+                if m == (len(functionLines) - n - 1):
                     rating_result.append('%d:end未对齐或未写end' % (lineNumber + n + m + 1))
                     # print('%d行end未对齐或未写end' % n)
 
         elif ((lineTabCnt[n] - lineTabCnt[n-1]) % 4 != 0):
             rating_result.append('%d:与其它行格式未对齐' % (lineNumber + n + 1))
             # print('%d 行与其它行格式未对齐' % (n))
-        elif (lineTabCnt[n] == 0) and (len(fun_lines[n]) != 0):
+        elif (lineTabCnt[n] == 0) and (len(functionLines[n]) != 0):
             rating_result.append('%d:直接顶格' % (lineNumber + n + 1))
             # print('%d 行直接顶格' % n)
 
