@@ -3,17 +3,17 @@
 import sys
 import os
 import re
-from coderegex import _LUA_FUNCTION_REGEX
-from coderegex import _LUA_LOCAL_VARIABLE_REGEX
-from coderegex import _LUA_COMMENTS_REGEX
-from coderegex import _LUA_FUNCTION_WITH_COMMENTS_REGEX
+
+_LUA_COMMENTS_REGEX = re.compile(ur'(--\[\[(\s|\S)*?\]\](--)*)')
+_LUA_FUNCTION_REGEX = re.compile(ur'((local ){0,1}function\s+(.*))')
+_LUA_LOCAL_VARIABLE_REGEX = re.compile(ur'(local\s(.)*)')
+_LUA_FUNCTION_WITH_COMMENTS_REGEX = re.compile(ur'(--\[\[(\s|\S)*?\]\](--)*(\s)*(local ){0,1}function\s+(.*))')
 
 class Rating(object):
     def __init__(self):
         self.rating_result = []
         self.fileLines = []
         self.oneLine_keywords_list = ['if', 'for', 'do', 'while', 'case', 'switch', 'default']
-
 
     #
     # 加载需要评分的文件
@@ -26,7 +26,9 @@ class Rating(object):
         self.doLuaCommentsCheck(self.content)
         self.doLuaAllFunctionCheck(self.content)
 
+    #
     # 获取报错所在行
+    #
     def getLineNumber(self, content):
         try:
             return self.fileLines.index(content) + 1
@@ -336,7 +338,7 @@ def main():
         out.writelines(rating.rating_result[i] + '\n')
 
     out.close()
-    print('审查结束,结果保存在result.txt文件中')
+    print('审查结束,结果保存在result.txt')
 
 if __name__ == '__main__':
     main()
