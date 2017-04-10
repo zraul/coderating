@@ -11,3 +11,5 @@
 10.if、for、do、while、case、switch、default等语句自占一行
 11.if、for、while、switch 等与后面的括号间应加空格，使 if 等关键字更为突出、明显
 12.逗号在后面加空格
+13.使用二目运算符时，运算符左右两边要有一个空格。
+14.布尔变量用is、can、has开头
