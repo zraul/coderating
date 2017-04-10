@@ -1,7 +1,6 @@
 # -*- coding:utf-8-*-
 
 import sys
-import os
 import re
 
 _LUA_COMMENTS_REGEX = re.compile(ur'(--\[\[(\s|\S)*?\]\](--)*)')
@@ -129,7 +128,6 @@ class Rating(object):
 
     #
     # 检查函数内容
-    #
     #
     def doLuaAllFunctionCheck(self, content):
         functionList = _LUA_FUNCTION_REGEX.findall(content)
