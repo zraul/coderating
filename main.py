@@ -33,8 +33,7 @@ class Rating(object):
     def getLineNumber(self, content):
         try:
             return self.fileLines.index(content) + 1
-        except Exception, e:
-            # print('%s 取得报错行失败' % content)
+        except Exception:
             pass
 
 
@@ -77,7 +76,7 @@ class Rating(object):
 
             if 'See' not in content:
                 self.ratingResultList.append('%s:缺少参考文档注释' % self.getLineNumber(functionName))
-        except Exception, e:
+        except Exception:
             pass
 
     #
@@ -87,7 +86,7 @@ class Rating(object):
         try:
             if '-- ' not in content.splitlines()[-2]:
                 self.ratingResultList.append('%s 私有方法缺少注释' % self.getLineNumber(functionName))
-        except Exception, e:
+        except Exception:
             pass
 
     #
@@ -97,7 +96,7 @@ class Rating(object):
         try:
             if '-- ' not in content.splitlines()[-2]:
                 self.ratingResultList.append('%s 成员方法缺少注释' % self.getLineNumber(functionName))
-        except Exception, e:
+        except Exception:
             pass
 
     #
@@ -141,6 +140,9 @@ class Rating(object):
                 if length > 20:
                     self.ratingResultList.append("%d:函数超过20行" % (lineNumber + 1))
 
+                # 保存所有的函数
+                realFunctionList.append(functionList[i][0].strip())
+
                 # 函数名与参数格式检查
                 self.doCheckFunctionName(functionList[i][0].strip(), lineNumber)
 
@@ -150,10 +152,7 @@ class Rating(object):
                 self.doCheckIsAlign(functionLines, lineNumber)
                 self.checkFunctionLineIsTooLong(functionLines, lineNumber)
                 self.checkFunctionByLines(functionLines, lineNumber)
-
-                # 保存所有的函数
-                realFunctionList.append(functionList[i][0].strip())
-            except Exception,e:
+            except Exception:
                 pass
 
         functionWithCommentsList = _LUA_FUNCTION_WITH_COMMENTS_REGEX.findall(content)
@@ -193,7 +192,7 @@ class Rating(object):
     def doCheckOperatorWithSpace(self, lineContent, lineNumber):
         try:
             for i in range(len(self.secondOperatorList)):
-                if self.secondOperatorList[i] in lineContent:
+                if (self.secondOperatorList[i] in lineContent)  and ('--' not in lineContent):
                     if (' ' + self.secondOperatorList[i] + ' ') not in lineContent:
                         self.ratingResultList.append('%d:%s操作符两端未填充空格' % (lineNumber, self.secondOperatorList[i]))
         except Exception:
@@ -211,7 +210,7 @@ class Rating(object):
                         break
                     else:
                         lineContent = lineContent.replace(', ', '', 1)
-        except Exception, e:
+        except Exception:
             pass
 
     #
@@ -224,7 +223,7 @@ class Rating(object):
                     if lineContent.endswith('end'):
                         # print('%d %s' % (startLineNumber + indexLineNumber + 1, lineContent))
                         self.ratingResultList.append('%d:%s语句未独占一行' % (lineNumber, self.oneLineKeywordsList[i]))
-        except Exception, e:
+        except Exception:
             pass
 
     #
@@ -294,7 +293,7 @@ class Rating(object):
             for i in range(len(lines)):
                 if content in lines[i]:
                     return i + 1
-        except Exception, e:
+        except Exception:
             return 0
 
     #
