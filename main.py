@@ -85,7 +85,7 @@ class Rating(object):
     def checkPrivateFunctionComments(self, content, functionName):
         try:
             if '-- ' not in content.splitlines()[-2]:
-                self.ratingResultList.append('%s 私有方法缺少注释' % self.getLineNumber(functionName))
+                self.ratingResultList.append('%s:私有方法缺少注释' % self.getLineNumber(functionName))
         except Exception:
             pass
 
@@ -95,7 +95,7 @@ class Rating(object):
     def checkMemberFunctionComments(self, content, functionName):
         try:
             if '-- ' not in content.splitlines()[-2]:
-                self.ratingResultList.append('%s 成员方法缺少注释' % self.getLineNumber(functionName))
+                self.ratingResultList.append('%s:成员方法缺少注释' % self.getLineNumber(functionName))
         except Exception:
             pass
 
@@ -193,9 +193,13 @@ class Rating(object):
         try:
             for i in range(len(self.secondOperatorList)):
                 if (self.secondOperatorList[i] in lineContent)  and ('--' not in lineContent):
-                    if (' ' + self.secondOperatorList[i] + ' ') not in lineContent:
-                        self.ratingResultList.append('%d:%s操作符两端未填充空格' % (lineNumber, self.secondOperatorList[i]))
+                    tmpRex = re.compile(ur'("(\S| )*?(\+|\-|\%|\*|<|>)*?(\S| )*?")').findall(lineContent)
+                    # 操作符不在引号中
+                    if len(tmpRex) == 0:
+                        if (' ' + self.secondOperatorList[i] + ' ') not in lineContent:
+                            self.ratingResultList.append('%d:%s操作符两端未填充空格' % (lineNumber, self.secondOperatorList[i]))
         except Exception:
+            print lineContent
             pass
 
     #
@@ -308,7 +312,6 @@ class Rating(object):
         for n in range(1, len(functionLines) - 1):
             # if/for判断
             if ('if ' in functionLines[n]) or ('for ' in functionLines[n]):
-                # print('if 开始行 %d' % n)
                 m = 0
                 for m in range(1, len(functionLines) - n):
                     if ((lineTabCnt[n + m] - lineTabCnt[n]) % 4 != 0):
@@ -326,10 +329,8 @@ class Rating(object):
 
             elif ((lineTabCnt[n] - lineTabCnt[n-1]) % 4 != 0):
                 self.ratingResultList.append('%d:与其它行格式未对齐' % (lineNumber + n + 1))
-                # print('%d 行与其它行格式未对齐' % (n))
             elif (lineTabCnt[n] == 0) and (len(functionLines[n]) != 0):
                 self.ratingResultList.append('%d:直接顶格' % (lineNumber + n + 1))
-                # print('%d 行直接顶格' % n)
 
 
     #
@@ -341,6 +342,8 @@ class Rating(object):
         for i in range(len(line)):
             if line[i] == ' ':
                 cnt = cnt + 1
+            elif line[i] == '	':
+                cnt = cnt + 4
             else:
                 break
 
